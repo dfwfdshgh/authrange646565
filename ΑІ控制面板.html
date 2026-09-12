@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ΑІ控制面板</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{
+            font-family:'Segoe UI','PingFang SC','Microsoft YaHei','Helvetica Neue',Arial,sans-serif;
+            background:#0a0f0a;
+            min-height:100vh;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            padding:20px;
+            overflow-x:auto;
+            min-width:1280px;
+            position:relative;
+            -webkit-user-select:none;
+            -moz-user-select:none;
+            -ms-user-select:none;
+            user-select:none;
+        }
+        body::before{
+            content:'';
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background-image:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(0,50,0,.05) 10px,rgba(0,50,0,.05) 20px);
+            pointer-events:none;
+            z-index:-1;
+        }
+        .main-container{
+            background:rgba(20,25,20,.9);
+            border-radius:8px;
+            border:2px solid rgba(255,150,0,.3);
+            padding:40px;
+            box-shadow:0 0 20px rgba(255,150,0,.15);
+            width:100%;
+            max-width:1200px;
+            position:relative;
+            overflow:hidden;
+        }
+        .main-container::before{
+            content:'';
+            position:absolute;
+            top:0;
+            left:0;
+            right:0;
+            bottom:0;
+            border:1px solid rgba(139,115,85,.2);
+            border-radius:8px;
+            pointer-events:none;
+        }
+        .title{
+            text-align:center;
+            color:#ffa500;
+            font-size:32px;
+            font-weight:800;
+            margin-bottom:40px;
+            letter-spacing:2px;
+            text-transform:uppercase;
+            text-shadow:0 0 10px rgba(255,165,0,.7),0 0 20px rgba(255,100,0,.5),2px 2px 4px rgba(0,0,0,.8);
+            position:relative;
+        }
+        .title::after{
+            content:'';
+            display:block;
+            width:100px;
+            height:3px;
+            background:linear-gradient(90deg,transparent,#ff6600,transparent);
+            margin:10px auto 0;
+            box-shadow:0 0 5px #ff6600;
+        }
+        .controls-wrapper{
+            display:flex;
+            gap:30px;
+            justify-content:center;
+            align-items:stretch;
+            max-width:1200px;
+            margin:0 auto;
+        }
+        .controls-grid{
+            flex:1;
+            max-width:950px;
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            grid-template-rows:repeat(3,minmax(120px,1fr));
+            gap:18px;
+        }
+        .control-group{
+            background:rgba(30,40,30,.6);
+            padding:18px;
+            border-radius:4px;
+            transition:all .3s ease;
+            border:1px solid rgba(139,115,85,.4);
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+            min-width:180px;
+            position:relative;
+            overflow:hidden;
+            box-shadow:inset 0 0 8px rgba(0,0,0,.4);
+        }
+
+        #group-confidenceSlider {
+            overflow: visible;
+        }
+        #group-xifufanwei {
+            overflow: visible;
+        }
+        .control-group::before{
+            content:'';
+            position:absolute;
+            top:-50%;
+            left:-50%;
+            width:200%;
+            height:200%;
+            background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px);
+            pointer-events:none;
+        }
+        .control-group:hover{
+            background:rgba(40,50,40,.7);
+            transform:translateY(-2px);
+            border-color:rgba(255,150,0,.6);
+            box-shadow:0 4px 15px rgba(255,150,0,.2),inset 0 0 12px rgba(0,255,0,.15);
+        }
+        .vertical-slider-container{
+            width:90px;
+            flex-shrink:0;
+            position:relative;
+        }
+        .vertical-slider-container .control-group{
+            width:100%;
+            height:100%;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:flex-start;
+            padding:18px 10px;
+            min-width:auto;
+        }
+        .control-label{
+            font-size:14px;
+            color:#a0c0a0;
+            margin-bottom:12px;
+            font-weight:600;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:6px;
+            letter-spacing:.5px;
+            text-align:center;
+            text-transform:uppercase;
+            text-shadow:0 1px 2px rgba(0,0,0,.8);
+        }
+        .help-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: rgba(255, 150, 0, 0.25);
+            color: #ffaa33;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 150, 0, 0.6);
+            cursor: help;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .help-icon:hover {
+            background: #ff8800;
+            color: #0a0f0a;
+            border-color: #ffcc44;
+            box-shadow: 0 0 8px rgba(255, 136, 0, 0.4);
+        }
+        .vertical-slider-container .control-label{
+            margin-bottom:10px;
+        }
+        .switch-container{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            flex-grow:1;
+        }
+        .switch{
+            position:relative;
+            width:60px;
+            height:30px;
+            background:#2a2a2a;
+            border-radius:0;
+            cursor:pointer;
+            transition:background .3s ease;
+            box-shadow:inset 0 0 8px rgba(0,0,0,.6),0 0 0 1px rgba(139,115,85,.4);
+            border:1px solid rgba(139,115,85,.3);
+        }
+        .switch.active{
+            background:linear-gradient(90deg,#ff6600,#ffaa00);
+            box-shadow:0 0 10px rgba(255,102,0,.5),inset 0 0 5px rgba(255,255,255,.2);
+        }
+        .switch-slider{
+            position:absolute;
+            top:4px;
+            left:4px;
+            width:20px;
+            height:20px;
+            background:#444;
+            border-radius:0;
+            transition:transform .3s cubic-bezier(.68,-.55,.27,1.55);
+            box-shadow:0 2px 4px rgba(0,0,0,.5),inset 0 0 2px rgba(255,255,255,.1);
+        }
+        .switch.active .switch-slider{
+            transform:translateX(30px);
+            background:#fff;
+            box-shadow:0 0 8px rgba(255,255,255,.8),0 2px 4px rgba(0,0,0,.5);
+        }
+        .horizontal-slider{
+            -webkit-appearance:none;
+            appearance:none;
+            width:100%;
+            height:8px;
+            background:#1a1a1a;
+            border-radius:0;
+            outline:none;
+            box-shadow:inset 0 0 5px rgba(0,0,0,.7),0 0 0 1px rgba(139,115,85,.3);
+            border:1px solid rgba(139,115,85,.2);
+        }
+        .horizontal-slider::-webkit-slider-thumb{
+            -webkit-appearance:none;
+            appearance:none;
+            width:20px;
+            height:20px;
+            background:linear-gradient(135deg,#ff6600,#ffaa00);
+            border-radius:0;
+            cursor:pointer;
+            transition:all .3s ease;
+            box-shadow:0 0 8px rgba(255,102,0,.6),0 2px 4px rgba(0,0,0,.5);
+            border:1px solid rgba(255,200,0,.5);
+        }
+        .horizontal-slider::-webkit-slider-thumb:hover{
+            transform:scale(1.1);
+            box-shadow:0 0 12px rgba(255,102,0,.8),0 2px 6px rgba(0,0,0,.6);
+        }
+        .horizontal-slider::-moz-range-thumb{
+            width:20px;
+            height:20px;
+            background:linear-gradient(135deg,#ff6600,#ffaa00);
+            border-radius:0;
+            cursor:pointer;
+            border:1px solid rgba(255,200,0,.5);
+            transition:all .3s ease;
+            box-shadow:0 0 8px rgba(255,102,0,.6),0 2px 4px rgba(0,0,0,.5);
+        }
+        .horizontal-slider-container{
+            position:relative;
+            width:100%;
+            padding-top:40px;
+        }
+        .horizontal-slider-value{
+            position:absolute;
+            top:0;
+            left:50%;
+            transform:translateX(-50%);
+            background:linear-gradient(135deg,#ff6600,#ffaa00);
+            color:#000;
+            padding:6px 10px;
+            border-radius:0;
+            font-size:14px;
+            font-weight:700;
+            min-width:40px;
+            text-align:center;
+            box-shadow:0 0 8px rgba(255,102,0,.5),0 2px 4px rgba(0,0,0,.4);
+            border:1px solid rgba(255,200,0,.4);
+        }
+        .vertical-slider-wrapper{
+            position:relative;
+            height:300px;
+            width:40px;
+            margin:0 auto;
+            z-index:1;
+        }
+        .stick-figure{
+            position:absolute;
+            top:0;
+            left:50%;
+            transform:translateX(-50%);
+            width:90px;
+            height:300px;
+            z-index:0;
+            color:#ff6600;
+            opacity:.3;
+            pointer-events:none;
+        }
+        .vertical-slider{
+            -webkit-appearance:none;
+            appearance:none;
+            width:300px;
+            height:8px;
+            background:#1a1a1a;
+            border-radius:0;
+            outline:none;
+            box-shadow:inset 0 0 5px rgba(0,0,0,.7),0 0 0 1px rgba(139,115,85,.3);
+            border:1px solid rgba(139,115,85,.2);
+            transform:rotate(-90deg) translateX(-50%);
+            transform-origin:left center;
+            position:absolute;
+            left:50%;
+            top:50%;
+            margin-top:-4px;
+            z-index:2;
+        }
+        .vertical-slider::-webkit-slider-thumb{
+            -webkit-appearance:none;
+            appearance:none;
+            width:20px;
+            height:20px;
+            background:linear-gradient(135deg,#ff6600,#ffaa00);
+            border-radius:0;
+            cursor:pointer;
+            transition:all .3s ease;
+            box-shadow:0 0 8px rgba(255,102,0,.6),0 2px 4px rgba(0,0,0,.5);
+            border:1px solid rgba(255,200,0,.5);
+        }
+        .vertical-slider::-webkit-slider-thumb:hover{
+            transform:scale(1.1);
+            box-shadow:0 0 12px rgba(255,102,0,.8),0 2px 6px rgba(0,0,0,.6);
+        }
+        .vertical-slider::-moz-range-thumb{
+            width:20px;
+            height:20px;
+            background:linear-gradient(135deg,#ff6600,#ffaa00);
+            border-radius:0;
+            cursor:pointer;
+            border:1px solid rgba(255,200,0,.5);
+            transition:all .3s ease;
+            box-shadow:0 0 8px rgba(255,102,0,.6),0 2px 4px rgba(0,0,0,.5);
+        }
+        .vertical-slider-value{
+            position:absolute;
+            left:50%;
+            bottom:-40px;
+            transform:translateX(-50%);
+            background:linear-gradient(135deg,#ff6600,#ffaa00);
+            color:#000;
+            padding:6px 10px;
+            border-radius:0;
+            font-size:14px;
+            font-weight:700;
+            min-width:36px;
+            text-align:center;
+            box-shadow:0 0 8px rgba(255,102,0,.5),0 2px 4px rgba(0,0,0,.4);
+            border:1px solid rgba(255,200,0,.4);
+            z-index:2;
+        }
+        .connection-status{
+            position:fixed;
+            top:20px;
+            left:20px;
+            padding:8px 16px;
+            border-radius:0;
+            font-size:13px;
+            font-weight:700;
+            border:2px solid;
+            transition:all .3s ease;
+            text-transform:uppercase;
+            letter-spacing:.5px;
+            z-index:2000;
+        }
+        .connection-status.connected{
+            background:rgba(0,255,0,.1);
+            color:#00ff00;
+            border-color:#00ff00;
+            box-shadow:0 0 10px rgba(0,255,0,.3);
+        }
+        .connection-status.disconnected{
+            background:rgba(255,0,0,.1);
+            color:#ff3333;
+            border-color:#ff3333;
+            box-shadow:0 0 10px rgba(255,0,0,.3);
+        }
+        .connection-status.connecting{
+            background:rgba(255,165,0,.1);
+            color:#ffaa00;
+            border-color:#ffaa00;
+            box-shadow:0 0 10px rgba(255,165,0,.3);
+        }
+        .btn-top-right{
+            position:fixed;
+            top:20px;
+            right:20px;
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            z-index:2000;
+        }
+        .btn-top-right button{
+            padding:8px 16px;
+            background:linear-gradient(135deg,#ff6600,#ffaa00);
+            color:#000;
+            border:none;
+            border-radius:0;
+            cursor:pointer;
+            font-size:13px;
+            font-weight:700;
+            transition:all .3s ease;
+            text-transform:uppercase;
+            letter-spacing:.5px;
+            box-shadow:0 0 10px rgba(255,102,0,.4);
+            border:1px solid rgba(255,200,0,.4);
+        }
+        .btn-top-right button:hover{
+            transform:translateY(-2px);
+            box-shadow:0 0 15px rgba(255,102,0,.6);
+            background:linear-gradient(135deg,#ff7700,#ffbb00);
+        }
+        .btn-top-right button:active{
+            transform:translateY(0);
+            box-shadow:0 0 8px rgba(255,102,0,.4);
+        }
+        .btn-top-right button:disabled{
+            background:#444;
+            color:#666;
+            cursor:not-allowed;
+            box-shadow:none;
+        }
+        .control-disabled{
+            opacity:0.8;
+            pointer-events:none;
+            filter:grayscale(0.8);
+        }
+        .control-disabled .switch{
+            cursor:not-allowed;
+        }
+        .control-disabled .horizontal-slider{
+            cursor:not-allowed;
+        }
+        .control-disabled .vertical-slider{
+            cursor:not-allowed;
+        }
+        .control-disabled .custom-select{
+            cursor:not-allowed;
+        }
+        .tactical-icon::before{
+            content:'⚔';
+            margin-right:5px;
+            color:#ff6600;
+            text-shadow:0 0 5px rgba(255,102,0,.5);
+        }
+        .custom-select{
+            width:100%;
+            padding:8px 30px 8px 10px;
+            background:#1a1a1a;
+            color:#a0c0a0;
+            border:1px solid rgba(139,115,85,.4);
+            font-size:13px;
+            font-family:inherit;
+            outline:none;
+            cursor:pointer;
+            transition:all .3s ease;
+            appearance:none;
+            -webkit-appearance:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0c0a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat:no-repeat;
+            background-position:right 10px center;
+        }
+        .custom-select:focus{
+            border-color:rgba(255,150,0,.6);
+            box-shadow:0 0 8px rgba(255,150,0,.2);
+        }
+        .custom-select option{
+            background:#1a1a1a;
+            color:#a0c0a0;
+        }
+        .switch-wrapper,
+        .select-wrapper{
+            height:48px;
+            display:flex;
+            align-items:flex-start;
+            justify-content:center;
+            width:100%;
+        }
+
+        .global-tooltip {
+            position: fixed;
+            background: #1e1e1e;
+            color: #f0f0f0;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: normal;
+            white-space: nowrap;
+            z-index: 99999;
+            pointer-events: none;
+            border: 1px solid #aaaaaa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            font-family: inherit;
+            text-transform: none;
+            letter-spacing: normal;
+            line-height: 1.4;
+            transition: none;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .global-tooltip.show {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">未连接</div>
+    <div class="btn-top-right">
+        <button id="manualReconnectBtn">⚡ 重新连接</button>
+        <button id="restoreDefaultBtn">🔄 恢复默认</button>
+        <button id="saveSettingsBtn">💾 保存设置</button>
+    </div>
+    <div class="main-container">
+        <h1 class="title tactical-icon">ΑІ控制面板</h1>
+        <div class="controls-wrapper">
+            <div class="controls-grid">
+
+                <div class="control-group" id="group-confidenceSlider">
+                    <label class="control-label">
+                        吸附目标识别准确度
+                        <span class="help-icon" data-tooltip="识别目标是人的概率，越高识别越严苛越不容易吸附，越低吸附率越高，但误识别率也可能增高">?</span>
+                    </label>
+                    <div class="horizontal-slider-container">
+                        <input type="range" class="horizontal-slider" id="confidenceSlider" min="1" max="100" value="50">
+                        <div class="horizontal-slider-value" id="confidenceSliderValue">50</div>
+                    </div>
+                </div>
+                <div class="control-group" id="group-horizontalSpeed">
+                    <label class="control-label">吸附水平移速</label>
+                    <div class="horizontal-slider-container">
+                        <input type="range" class="horizontal-slider" id="horizontalSpeed" min="1" max="100" value="50">
+                        <div class="horizontal-slider-value" id="horizontalSpeedValue">50</div>
+                    </div>
+                </div>
+                <div class="control-group" id="group-customKey">
+                    <label class="control-label">自定义吸附键</label>
+                    <div class="select-wrapper">
+                        <select class="custom-select" id="customKey">
+                            <option value="0">左键/右键/大小写键</option>
+                            <option value="1">左键/右键</option>
+                            <option value="2">右键/大小写键</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group" id="group-kqscjyjsqSwitch">
+                    <label class="control-label">开启上侧键一键拾取</label>
+                    <div class="switch-wrapper">
+                        <div class="switch" id="kqscjyjsqSwitch">
+                            <div class="switch-slider"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group" id="group-xifufanwei">
+                    <label class="control-label">
+                        识别屏幕范围
+                        <span class="help-icon" data-tooltip="截取屏幕中央一小块区域进行人物识别，调高会稍微扩大识别区域">?</span>
+                    </label>
+                    <div class="horizontal-slider-container">
+                        <input type="range" class="horizontal-slider" id="xifufanwei" min="1" max="100" value="50">
+                        <div class="horizontal-slider-value" id="xifufanweiValue">50</div>
+                    </div>
+                </div>
+                <div class="control-group" id="group-verticalSpeed">
+                    <label class="control-label">吸附垂直移速</label>
+                    <div class="horizontal-slider-container">
+                        <input type="range" class="horizontal-slider" id="verticalSpeed" min="1" max="100" value="50">
+                        <div class="horizontal-slider-value" id="verticalSpeedValue">50</div>
+                    </div>
+                </div>
+                <div class="control-group" id="group-jysyxfSwitch">
+                    <label class="control-label">禁用右键吸附</label>
+                    <div class="switch-wrapper">
+                        <div class="switch" id="jysyxfSwitch">
+                            <div class="switch-slider"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group" id="group-yjsqsdSlider">
+                    <label class="control-label">一键拾取速度</label>
+                    <div class="horizontal-slider-container">
+                        <input type="range" class="horizontal-slider" id="yjsqsdSlider" min="1" max="100" value="50">
+                        <div class="horizontal-slider-value" id="yjsqsdSliderValue">50</div>
+                    </div>
+                </div>
+
+
+                <div class="control-group" id="group-leftMouseSlider">
+                    <label class="control-label">移动目标预瞄提前量</label>
+                    <div class="horizontal-slider-container">
+                        <input type="range" class="horizontal-slider" id="leftMouseSlider" min="1" max="100" value="50">
+                        <div class="horizontal-slider-value" id="leftMouseSliderValue">50</div>
+                    </div>
+                </div>
+                <div class="control-group" id="group-kjhxsyySwitch">
+                    <label class="control-label">禁用倍镜呼吸修正</label>
+                    <div class="switch-wrapper">
+                        <div class="switch" id="kjhxsyySwitch">
+                            <div class="switch-slider"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group" id="group-rightMouseSwitch">
+                    <label class="control-label">禁用狙击吸附</label>
+                    <div class="switch-wrapper">
+                        <div class="switch" id="rightMouseSwitch">
+                            <div class="switch-slider"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group" id="group-kqxckhSwitch">
+                    <label class="control-label">开启下侧键自动扳机</label>
+                    <div class="switch-wrapper">
+                        <div class="switch" id="kqxckhSwitch">
+                            <div class="switch-slider"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vertical-slider-container" id="group-yAxisSlider">
+                <div class="control-group">
+                    <label class="control-label">一号武器瞄准位置</label>
+                    <div class="vertical-slider-wrapper">
+                        <svg class="stick-figure" viewBox="0 0 90 300" preserveAspectRatio="xMidYMid meet">
+                            <circle cx="45" cy="22" r="20" stroke="currentColor" stroke-width="3" fill="none"/>
+                            <line x1="45" y1="42" x2="45" y2="160" stroke="currentColor" stroke-width="3"/>
+                            <line x1="45" y1="75" x2="10" y2="105" stroke="currentColor" stroke-width="3"/>
+                            <line x1="45" y1="75" x2="80" y2="105" stroke="currentColor" stroke-width="3"/>
+                            <circle cx="10" cy="105" r="5" fill="currentColor"/>
+                            <circle cx="80" cy="105" r="5" fill="currentColor"/>
+                            <line x1="45" y1="160" x2="20" y2="295" stroke="currentColor" stroke-width="3"/>
+                            <line x1="45" y1="160" x2="70" y2="295" stroke="currentColor" stroke-width="3"/>
+                            <line x1="5" y1="295" x2="35" y2="295" stroke="currentColor" stroke-width="4"/>
+                            <line x1="55" y1="295" x2="85" y2="295" stroke="currentColor" stroke-width="4"/>
+                        </svg>
+                        <input type="range" class="vertical-slider" id="yAxisSlider" min="1" max="100" value="50">
+                        <div class="vertical-slider-value" id="yAxisSliderValue">50</div>
+                    </div>
+                </div>
+            </div>
+            <div class="vertical-slider-container" id="group-yAxisSlider2">
+                <div class="control-group">
+                    <label class="control-label">二号武器瞄准位置</label>
+                    <div class="vertical-slider-wrapper">
+                        <svg class="stick-figure" viewBox="0 0 90 300" preserveAspectRatio="xMidYMid meet">
+                            <circle cx="45" cy="22" r="20" stroke="currentColor" stroke-width="3" fill="none"/>
+                            <line x1="45" y1="42" x2="45" y2="160" stroke="currentColor" stroke-width="3"/>
+                            <line x1="45" y1="75" x2="10" y2="105" stroke="currentColor" stroke-width="3"/>
+                            <line x1="45" y1="75" x2="80" y2="105" stroke="currentColor" stroke-width="3"/>
+                            <circle cx="10" cy="105" r="5" fill="currentColor"/>
+                            <circle cx="80" cy="105" r="5" fill="currentColor"/>
+                            <line x1="45" y1="160" x2="20" y2="295" stroke="currentColor" stroke-width="3"/>
+                            <line x1="45" y1="160" x2="70" y2="295" stroke="currentColor" stroke-width="3"/>
+                            <line x1="5" y1="295" x2="35" y2="295" stroke="currentColor" stroke-width="4"/>
+                            <line x1="55" y1="295" x2="85" y2="295" stroke="currentColor" stroke-width="4"/>
+                        </svg>
+                        <input type="range" class="vertical-slider" id="yAxisSlider2" min="1" max="100" value="50">
+                        <div class="vertical-slider-value" id="yAxisSliderValue2">50</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <div id="globalTooltip" class="global-tooltip"></div>
+
+    <script>
+        (function() {
+            const tooltip = document.getElementById('globalTooltip');
+            
+            function showTooltip(text, targetRect) {
+                tooltip.textContent = text;
+                tooltip.classList.add('show');
+                const tipRect = tooltip.getBoundingClientRect();
+                const tipWidth = tipRect.width;
+                const tipHeight = tipRect.height;
+                
+
+                let left = targetRect.left + targetRect.width / 2 - tipWidth / 2;
+                let top = targetRect.top - tipHeight - 8;
+                
+
+                if (left < 5) left = 5;
+                if (left + tipWidth > window.innerWidth - 5) left = window.innerWidth - tipWidth - 5;
+
+                if (top < 5) {
+                    top = targetRect.bottom + 8;
+                    if (top + tipHeight > window.innerHeight - 5) {
+                        top = targetRect.top - tipHeight - 8;
+                        if (top < 5) top = 10;
+                    }
+                }
+                
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = top + 'px';
+                tooltip.classList.add('show');
+            }
+            
+            function hideTooltip() {
+                tooltip.classList.remove('show');
+            }
+            
+
+            const helpIcons = document.querySelectorAll('.help-icon');
+            helpIcons.forEach(icon => {
+                const tipText = icon.getAttribute('data-tooltip');
+                if (!tipText) return;
+                
+                icon.addEventListener('mouseenter', (e) => {
+                    const rect = icon.getBoundingClientRect();
+                    showTooltip(tipText, rect);
+                });
+                
+                icon.addEventListener('mouseleave', () => {
+                    hideTooltip();
+                });
+            });
+        })();
+        
+
+        class WebSocketClient{
+            constructor(url){
+                this.url=url;
+                this.ws=null;
+                this.isConnected=false;
+                this.reconnectAttempts=0;
+                this.maxReconnectAttempts=3;
+            }
+            connect(){
+                updateConnectionStatus('connecting','正在连接...');
+                try{
+                    this.ws=new WebSocket(this.url);
+                    this.setupEventHandlers();
+                }catch(error){
+                    updateConnectionStatus('disconnected','连接失败');
+                    updateControlsState(false);
+                }
+            }
+            disconnect(){
+                if(this.ws){
+                    this.ws.close();
+                    this.ws=null;
+                }
+                this.isConnected=false;
+                this.reconnectAttempts=0;
+                updateControlsState(false);
+            }
+            setupEventHandlers(){
+                this.ws.onopen=()=>{
+                    this.isConnected=true;
+                    this.reconnectAttempts=0;
+                    updateConnectionStatus('connected','已连接');
+                    updateControlsState(true);
+                };
+                this.ws.onclose=()=>{
+                    this.isConnected=false;
+                    updateConnectionStatus('disconnected','未连接');
+                    updateControlsState(false);
+                };
+                this.ws.onerror=()=>{
+                    this.isConnected=false;
+                    updateConnectionStatus('disconnected','连接错误');
+                    updateControlsState(false);
+                };
+                this.ws.onmessage=(event)=>{
+                    applySettings(event.data);
+                };
+            }
+            sendBytes(data){
+                if(!this.isConnected||!this.ws||this.ws.readyState!==WebSocket.OPEN)return false;
+                try{
+                    const encoder=new TextEncoder();
+                    const bytes=encoder.encode(data.toString());
+                    this.ws.send(bytes);
+                    return true;
+                }catch(error){
+                    return false;
+                }
+            }
+        }
+        const wsClient=new WebSocketClient('ws://127.0.0.1:8685');
+        
+        window.addEventListener('DOMContentLoaded',()=>{
+            updateControlsState(false);
+            setTimeout(()=>{
+                wsClient.connect();
+            },50);
+        });
+        
+        document.getElementById('manualReconnectBtn').addEventListener('click',function(){
+            if(wsClient.isConnected){
+                wsClient.disconnect();
+                updateConnectionStatus('disconnected','未连接');
+                this.textContent='⚡ 重新连接';
+            }else{
+                wsClient.connect();
+                this.textContent='⏹ 断开连接';
+            }
+        });
+        document.getElementById('saveSettingsBtn').addEventListener('click',()=>{
+            if(!wsClient.isConnected)return;
+            sendControlData('BAOCUN','K');
+        });
+        document.getElementById('restoreDefaultBtn').addEventListener('click',()=>{
+            if(!wsClient.isConnected)return;
+            setSlider('confidenceSlider',50);
+            setSlider('leftMouseSlider',50);
+            setSlider('xifufanwei',50);
+            setSlider('horizontalSpeed',50);
+            setSlider('verticalSpeed',50);
+            setSlider('yAxisSlider',50);
+            setSlider('yAxisSlider2',50);
+            setSlider('yjsqsdSlider',50);
+            setSwitch('kjhxsyySwitch',false);
+            setSwitch('rightMouseSwitch',false);
+            setSwitch('jysyxfSwitch',false);
+            setSwitch('kqscjyjsqSwitch',false);
+            setSwitch('kqxckhSwitch',false);
+            document.getElementById('customKey').value='0';
+            sendControlData('HUIFU','K');
+        });
+        function updateConnectionStatus(status,message){
+            const el=document.getElementById('connectionStatus');
+            el.className=`connection-status ${status}`;
+            el.textContent=message;
+            const btn=document.getElementById('manualReconnectBtn');
+            if(status==='connected'){
+                btn.textContent='⏹ 断开连接';
+                btn.disabled=false;
+            }else if(status==='connecting'){
+                btn.textContent='⏳ 连接中...';
+                btn.disabled=true;
+            }else{
+                btn.textContent='⚡ 重新连接';
+                btn.disabled=false;
+            }
+        }
+        function updateControlsState(enabled){
+            const controlIds=['confidenceSlider','leftMouseSlider','xifufanwei','horizontalSpeed','verticalSpeed','yAxisSlider','yAxisSlider2','yjsqsdSlider','kjhxsyySwitch','rightMouseSwitch','jysyxfSwitch','kqscjyjsqSwitch','kqxckhSwitch','customKey'];
+            const containerIds=['group-confidenceSlider','group-leftMouseSlider','group-xifufanwei','group-horizontalSpeed','group-verticalSpeed','group-yAxisSlider','group-yAxisSlider2','group-yjsqsdSlider','group-kjhxsyySwitch','group-rightMouseSwitch','group-jysyxfSwitch','group-kqscjyjsqSwitch','group-kqxckhSwitch','group-customKey'];
+            controlIds.forEach((id,index)=>{
+                const el=document.getElementById(id);
+                const container=document.getElementById(containerIds[index]);
+                if(el)el.disabled=!enabled;
+                if(container){
+                    if(enabled)container.classList.remove('control-disabled');
+                    else container.classList.add('control-disabled');
+                }
+            });
+            document.getElementById('saveSettingsBtn').disabled=!enabled;
+            document.getElementById('restoreDefaultBtn').disabled=!enabled;
+        }
+        function applySettings(raw){
+            if(!raw||typeof raw!=='string')return;
+            const map={};
+            raw.split(',').forEach(p=>{
+                const[k,v]=p.split(':');
+                if(k)map[k]=v||'';
+            });
+            if(map.ZXD!=null)setSlider('confidenceSlider',map.ZXD);
+            if(map.YDMBYM!=null)setSlider('leftMouseSlider',map.YDMBYM);
+            if(map.XFFW!=null)setSlider('xifufanwei',map.XFFW);
+            if(map.XFSPYS!=null)setSlider('horizontalSpeed',map.XFSPYS);
+            if(map.XFCZYS!=null)setSlider('verticalSpeed',map.XFCZYS);
+            if(map.MZWZ1!=null)setSlider('yAxisSlider',map.MZWZ1);
+            if(map.MZWZ2!=null)setSlider('yAxisSlider2',map.MZWZ2);
+            if(map.YJSQSD!=null)setSlider('yjsqsdSlider',map.YJSQSD);
+            if(map.KJHXSYYC!=null)setSwitch('kjhxsyySwitch',map.KJHXSYYC==='K');
+            if(map.JYBJXF!=null)setSwitch('rightMouseSwitch',map.JYBJXF==='K');
+            if(map.JYYJXF!=null)setSwitch('jysyxfSwitch',map.JYYJXF==='K');
+            if(map.KQSCJYJSQ!=null)setSwitch('kqscjyjsqSwitch',map.KQSCJYJSQ==='K');
+            if(map.KQXCJZDKH!=null)setSwitch('kqxckhSwitch',map.KQXCJZDKH==='K');
+            if(map.ZDYXFJ!=null){
+                const select=document.getElementById('customKey');
+                if(select)select.value=map.ZDYXFJ;
+            }
+        }
+        function setSlider(id,val){
+            const slider=document.getElementById(id);
+            const num=parseInt(val,10);
+            if(!isNaN(num)&&slider){
+                slider.value=num;
+                const valueEl=document.getElementById(id+'Value')||document.getElementById(id.replace('Slider','SliderValue'));
+                if(valueEl)valueEl.textContent=num;
+            }
+        }
+        function setSwitch(id,on){
+            const sw=document.getElementById(id);
+            if(sw){
+                if(on)sw.classList.add('active');
+                else sw.classList.remove('active');
+            }
+        }
+        function sendControlData(controlType,value){
+            if(!wsClient.isConnected)return;
+            try{
+                const data=value?`${controlType}:${value}`:controlType;
+                const encoder=new TextEncoder();
+                const bytes=encoder.encode(data.toString());
+                wsClient.ws.send(bytes);
+            }catch(error){}
+        }
+        const confidenceSlider=document.getElementById('confidenceSlider');
+        const confidenceSliderValue=document.getElementById('confidenceSliderValue');
+        confidenceSlider.addEventListener('input',function(){confidenceSliderValue.textContent=this.value;});
+        confidenceSlider.addEventListener('mouseup',function(){sendControlData('ZXD',this.value);});
+        const leftMouseSlider=document.getElementById('leftMouseSlider');
+        const leftMouseSliderValue=document.getElementById('leftMouseSliderValue');
+        leftMouseSlider.addEventListener('input',function(){leftMouseSliderValue.textContent=this.value;});
+        leftMouseSlider.addEventListener('mouseup',function(){sendControlData('YDMBYM',this.value);});
+        const horizontalSpeed=document.getElementById('horizontalSpeed');
+        const horizontalSpeedValue=document.getElementById('horizontalSpeedValue');
+        horizontalSpeed.addEventListener('input',function(){horizontalSpeedValue.textContent=this.value;});
+        horizontalSpeed.addEventListener('mouseup',function(){sendControlData('XFSPYS',this.value);});
+        const verticalSpeed=document.getElementById('verticalSpeed');
+        const verticalSpeedValue=document.getElementById('verticalSpeedValue');
+        verticalSpeed.addEventListener('input',function(){verticalSpeedValue.textContent=this.value;});
+        verticalSpeed.addEventListener('mouseup',function(){sendControlData('XFCZYS',this.value);});
+        const xifufanwei=document.getElementById('xifufanwei');
+        const xifufanweiValue=document.getElementById('xifufanweiValue');
+        xifufanwei.addEventListener('input',function(){xifufanweiValue.textContent=this.value;});
+        xifufanwei.addEventListener('mouseup',function(){sendControlData('XFFW',this.value);});
+        const rightMouseSwitch=document.getElementById('rightMouseSwitch');
+        rightMouseSwitch.addEventListener('click',function(){
+            if(!wsClient.isConnected)return;
+            this.classList.toggle('active');
+            const isActive=this.classList.contains('active');
+            sendControlData(isActive?'JYBJXF:K':'JYBJXF:G');
+        });
+        const yAxisSlider=document.getElementById('yAxisSlider');
+        const yAxisSliderValue=document.getElementById('yAxisSliderValue');
+        yAxisSlider.addEventListener('input',function(){yAxisSliderValue.textContent=this.value;});
+        yAxisSlider.addEventListener('mouseup',function(){sendControlData('MZWZ1',this.value);});
+        const yAxisSlider2=document.getElementById('yAxisSlider2');
+        const yAxisSliderValue2=document.getElementById('yAxisSliderValue2');
+        yAxisSlider2.addEventListener('input',function(){yAxisSliderValue2.textContent=this.value;});
+        yAxisSlider2.addEventListener('mouseup',function(){sendControlData('MZWZ2',this.value);});
+        const kjhxsyySwitch=document.getElementById('kjhxsyySwitch');
+        kjhxsyySwitch.addEventListener('click',function(){
+            if(!wsClient.isConnected)return;
+            this.classList.toggle('active');
+            const isActive=this.classList.contains('active');
+            sendControlData(isActive?'KJHXSYYC:K':'KJHXSYYC:G');
+        });
+        const jysyxfSwitch=document.getElementById('jysyxfSwitch');
+        jysyxfSwitch.addEventListener('click',function(){
+            if(!wsClient.isConnected)return;
+            this.classList.toggle('active');
+            const isActive=this.classList.contains('active');
+            sendControlData(isActive?'JYYJXF:K':'JYYJXF:G');
+        });
+        const kqxckhSwitch=document.getElementById('kqxckhSwitch');
+        kqxckhSwitch.addEventListener('click',function(){
+            if(!wsClient.isConnected)return;
+            this.classList.toggle('active');
+            const isActive=this.classList.contains('active');
+            sendControlData(isActive?'KQXCJZDKH:K':'KQXCJZDKH:G');
+        });
+        const kqscjyjsqSwitch=document.getElementById('kqscjyjsqSwitch');
+        kqscjyjsqSwitch.addEventListener('click',function(){
+            if(!wsClient.isConnected)return;
+            this.classList.toggle('active');
+            const isActive=this.classList.contains('active');
+            sendControlData(isActive?'KQSCJYJSQ:K':'KQSCJYJSQ:G');
+        });
+        const yjsqsdSlider=document.getElementById('yjsqsdSlider');
+        const yjsqsdSliderValue=document.getElementById('yjsqsdSliderValue');
+        yjsqsdSlider.addEventListener('input',function(){yjsqsdSliderValue.textContent=this.value;});
+        yjsqsdSlider.addEventListener('mouseup',function(){sendControlData('YJSQSD',this.value);});
+        const customKey=document.getElementById('customKey');
+        customKey.addEventListener('change',function(){
+            if(!wsClient.isConnected)return;
+            sendControlData('ZDYXFJ',this.value);
+        });
+        updateConnectionStatus('disconnected','未连接');
+    </script>
+</body>
+</html>
